@@ -3,6 +3,8 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.signal import coherence
+from matplotlib.widgets import Button
+
 
 samplerate = 44100
 blocksize = 1024
@@ -30,12 +32,13 @@ ax.set_ylabel("Coherence")
 ax.legend()
 ax.grid(True)
 
+
 def callback(indata, frames, time, status):
     global buffer_x, buffer_y
     if status:
         print(status)
     x=indata[:,0]
-    noise = np.random.normal(loc=0.0, scale=noise_std, size=len(x))*0.01
+    noise = np.random.normal(loc=0.0, scale=noise_std, size=len(x))
     y = x + noise
     buffer_x = x
     buffer_y = y
@@ -62,6 +65,21 @@ def update_plot(frame):
     line_max.set_ydata(max_coherence)
 
     return line_current, line_max
+
+def reset_max(event):
+    global max_coherence
+    max_coherence[:] = 0  # ゼロリセット
+    line_max.set_ydata(max_coherence)
+    plt.draw()  # 再描画
+
+
+# --- ② ボタンを配置する領域を作成 ---
+reset_ax = plt.axes([0.8, 0.02, 0.1, 0.05])  # [left, bottom, width, height]
+reset_button = Button(reset_ax, 'Reset Max')
+
+# --- ③ ボタンと関数をリンク ---
+reset_button.on_clicked(reset_max)
+
 
 stream = sd.InputStream(
     channels=1,
