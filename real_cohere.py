@@ -25,8 +25,8 @@ def callback(indata, frames, time, status):
     global buffer_x, buffer_y
     if status:
         print(status)
-    x=indata[:,0]
-    noise = np.random.normal(loc=0.0, scale=noise_std, size=len(x))*0.01
+    x = indata[:, 0]
+    noise = np.random.normal(loc=0.0, scale=noise_std, size=len(x))
     y = x + noise
     # y =x
 
