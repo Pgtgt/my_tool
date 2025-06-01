@@ -5,39 +5,63 @@ from matplotlib.animation import FuncAnimation
 from scipy.signal import coherence
 
 samplerate = 44100
-blocksize = 1024*8
-nfft = 256
-noise_std = 0.1  # ノイズの標準偏差
+blocksize = 1024
+nfft = 512
+noise_std = 0.1
 
 buffer_x = np.zeros(blocksize)
 buffer_y = np.zeros(blocksize)
 
 fig, ax = plt.subplots()
 f, Cxy = coherence(buffer_x, buffer_y, fs=samplerate, nperseg=nfft)
-line, = ax.plot(f, Cxy)
+
+# 初期化：動的コヒーレンス線と、最大記録線
+line_current, = ax.plot(f, Cxy, label="Current Coherence")
+line_max, = ax.plot(f, np.zeros_like(f), label="Max Coherence", color='red', linestyle='--')
+
+# 最大値を記録するバッファ
+max_coherence = np.zeros_like(f)
+
 ax.set_ylim([0, 1.2])
 ax.set_xlim([0, samplerate // 2])
 ax.set_title("Real-time Coherence (x vs x+noise)")
 ax.set_xlabel("Frequency [Hz]")
 ax.set_ylabel("Coherence")
+ax.legend()
+ax.grid(True)
 
 def callback(indata, frames, time, status):
     global buffer_x, buffer_y
     if status:
         print(status)
-    x = indata[:, 0]
-    noise = np.random.normal(loc=0.0, scale=noise_std, size=len(x))
+    x=indata[:,0]
+    noise = np.random.normal(loc=0.0, scale=noise_std, size=len(x))*0.01
     y = x + noise
-    # y =x
-
     buffer_x = x
     buffer_y = y
 
 def update_plot(frame):
-    global buffer_x, buffer_y
+    global buffer_x, buffer_y, max_coherence
     f, Cxy = coherence(buffer_x, buffer_y, fs=samplerate, nperseg=nfft)
-    line.set_ydata(Cxy)
-    return line,
+    Cxy = np.nan_to_num(Cxy, nan=0.0)
+    Cxy = np.clip(Cxy, 0.0, 1.0)
+
+    print("de")
+    print(buffer_x[0])
+    print(buffer_y[0])
+    print(Cxy[0])
+    # print(max_coherence[0])
+
+
+    # コヒーレンスの最大値を更新
+    max_coherence = np.maximum(max_coherence, Cxy)
+    # max_coherence = Cxy+0.2
+
+    # 線データ更新
+    line_current.set_ydata(Cxy)
+    line_max.set_ydata(max_coherence)
+
+    return line_current, line_max
 
 stream = sd.InputStream(
     channels=1,
