@@ -16,8 +16,11 @@ fig = plt.figure(figsize=(10,8))
 ax = fig.add_subplot(111, projection='3d')
 surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8, edgecolor='none')
 
-# 等高線もz=0平面に投影
-contour = ax.contour(X, Y, Z, levels=15, cmap='cool', offset=Z.min(), linestyles='solid', linewidths=1)
+# # 等高線もz=0平面に投影
+# contour = ax.contour(X, Y, Z, levels=15, cmap='cool', offset=Z.min(), linestyles='solid', linewidths=1)
+
+# サーフェス上に等高線
+contour = ax.contour(X, Y, Z, levels=15, colors='k', linewidths=1, zdir='z', offset=None)
 
 # 主軸（固有ベクトル）をxy平面上に赤い矢印で描く
 eigvals, eigvecs = np.linalg.eig(A)
